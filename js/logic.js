@@ -21,7 +21,7 @@ var layers = {
 // Create the map with our layers
 var map = L.map("map-id", {
   center: [37.278518, -114.953091],
-  zoom: 2.5,
+  zoom: 5,
   layers: [
     layers.upto1,
     layers.upto2,
@@ -50,90 +50,90 @@ var overlays = {
 L.control.layers(null, overlays).addTo(map);
 
 
-// Create a legend to display information about our map
-var info = L.control({
-  position: "bottomright"
-});
+var legend = L.control({position: 'bottomright'});
 
-// When the layer control is added, insert a div with the class of "legend"
-info.onAdd = function() {
-  var div = L.DomUtil.create("div", "legend");
+legend.onAdd = function (map) {
+
+  var div = L.DomUtil.create('div', 'info legend'),
+            grades = [0, 1, 2, 3, 4, 5],
+            labels=[]
+            
+// loop through our density intervals and generate a label with a colored square for each interval
+  for (var i = 0; i < grades.length; i++) {
+      div.innerHTML += 
+          '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+          grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+  }
   return div;
 };
-// Add the info legend to the map
-info.addTo(map);
+
+legend.addTo(map);
+
+
+function getColor(d) {
+return d > 5 ? 'red' :
+  d > 4  ? 'darkorange' :
+  d > 3  ? 'gold' :
+  d > 2  ? 'yellow' :
+  d > 1   ? 'greenyellow' :
+          'limegreen';
+}
 
 
  
   d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson", function(data) {
 
-  // var colors = {
-  //   "upto1":"limegreen",
-  //   "upto2":"greenyellow",
-  //   "upto3":"yellow",
-  //   "upto4":"gold",
-  //   "upto5":"orange",
-  //   "more5":"orangered"
-  // }
-  var colorScale = ['limegreen', 'greenyellow','yellow', 'gold', 'orange', 'orangered']  
+  var colors = {
+    "upto1":"limegreen",
+    "upto2":"greenyellow",
+    "upto3":"yellow",
+    "upto4":"gold",
+    "upto5":"darkorange",
+    "more5":"red"
+  }
+  // var colorScale = ['limegreen', 'greenyellow','yellow', 'gold', 'orange', 'orangered']  
     
     for (var i = 0; i < data.features.length; i++) {
 
       var magnitude = data.features[i].properties.mag;
         console.log(magnitude)
-      var magnitude_rounded = Math.floor(magnitude);
+      // var magnitude_rounded = Math.floor(magnitude);
 
       var markerColor;
 
-        if (magnitude<1) {
+        if (magnitude <= 1) {
           markerColor = "upto1";
-          // markerColor = colors["upto1"];
-          // markerColor = "limegreen";
-          console.log(markerColor)
         }
         
-        else if (1<magnitude<2) {
+        else if (magnitude >= 1 && magnitude <= 2) {
           markerColor = "upto2";
-          // markerColor = colors.upto2;
-          // markerColor = colors["upto2"];
-          console.log(markerColor)
         }
       
-        else if (2<magnitude<3) {
+        else if (magnitude >= 2 && magnitude <= 3) {
           markerColor = "upto3";
-          // markerColor = colors["upto3"];
-          console.log(markerColor)
         }
       
-        else if (3<magnitude<4) {
+        else if (magnitude >= 3 && magnitude <= 4) {
           markerColor = "upto4";
-          // markerColor = colors["upto4"];
-          console.log(markerColor)
         }
      
-        else if (4<magnitude<5) {
+        else if (magnitude >= 4 && magnitude <= 5) {
           markerColor = "upto5";
-          // markerColor = colors["upto5"];
-          console.log(markerColor)
         }
         else {
           markerColor = "more5";
-          // markerColor = colors["more5"];
-          console.log(markerColor)
         }
 
       
         new L.CircleMarker([data.features[i].geometry.coordinates[1], data.features[i].geometry.coordinates[0]], {
-          radius: data.features[i].properties.mag * 5, 
-          // color: markerColor,
-          // fillColor: markerColor,
-          color: "limegreen",
-          fillColor: "blue",
+          radius: magnitude*5, 
+          color: 'grey',
+          fillColor: colors[markerColor],
           // color: colorScale[magnitude_rounded],
           // fillColor:colorScale[magnitude_rounded], 
           weight: 1,
           opacity: 1,
-          fillOpacity: 0.4,
+          fillOpacity: 0.8,
           clickable: true
         }).bindPopup(data.features[i].properties.place + "<br> Magnitude: " + data.features[i].properties.mag).addTo(layers[markerColor]);
 
